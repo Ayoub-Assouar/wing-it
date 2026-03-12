@@ -1,0 +1,14 @@
+# Ignored build artifacts
+*.cpp
+*.h
+*.rc
+*.res
+*.ico
+*.wav
+*.mp3
+*.zip
+*.o
+
+# Temp
+Thumbs.db
+desktop.ini
