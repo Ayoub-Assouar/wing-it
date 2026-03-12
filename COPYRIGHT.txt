@@ -9,21 +9,14 @@ Date:            March 2026
 ORIGINAL WORKS CLAIMED:
 
   - Win32/GDI game engine (C++)
-  - Game physics, mechanics, and tuning
+  - Game concept, mechanics, and physics tuning
   - All rendering code and visual design
   - Bird character visual design (original icon)
   - All 5 sound effects (mathematically synthesized)
+  - Shop system and ability system
   - Anti-cheat and DRM system
-  - Frame timing precision loop
+  - Frame timing precision loop (60 FPS QPC)
   - Registry persistence system
-
-----------------------------------------------------------------
-ACKNOWLEDGEMENT:
-
-  The Flappy Bird game concept was originally created by
-  Dong Nguyen / .GEARS Studios (2013). This is an independent
-  reimplementation with 100% original code, original assets,
-  and original sound effects.
 
 ----------------------------------------------------------------
 UNAUTHORIZED USE:
