@@ -1,0 +1,36 @@
+Flappy Bird
+Copyright (c) 2026 Ayoub Assouar. All rights reserved.
+
+Author:          Ayoub Assouar
+Online Identity: EvenKiller0 / EvenKiller01YT
+Date:            March 2026
+
+----------------------------------------------------------------
+ORIGINAL WORKS CLAIMED:
+
+  - Win32/GDI game engine (C++)
+  - Game physics, mechanics, and tuning
+  - All rendering code and visual design
+  - Bird character visual design (original icon)
+  - All 5 sound effects (mathematically synthesized)
+  - Anti-cheat and DRM system
+  - Frame timing precision loop
+  - Registry persistence system
+
+----------------------------------------------------------------
+ACKNOWLEDGEMENT:
+
+  The Flappy Bird game concept was originally created by
+  Dong Nguyen / .GEARS Studios (2013). This is an independent
+  reimplementation with 100% original code, original assets,
+  and original sound effects.
+
+----------------------------------------------------------------
+UNAUTHORIZED USE:
+
+  Unauthorized copying, reverse engineering, decompilation,
+  disassembly, modification, or distribution of this software
+  or its assets is strictly prohibited and may be subject to
+  legal action under applicable copyright law.
+
+----------------------------------------------------------------
