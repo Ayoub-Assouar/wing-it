@@ -1,0 +1,29 @@
+Wing It
+Copyright (c) 2026 Ayoub Assouar. All rights reserved.
+
+Author:          Ayoub Assouar
+Online Identity: EvenKiller0 / EvenKiller01YT
+Date:            March 2026
+
+----------------------------------------------------------------
+ORIGINAL WORKS CLAIMED:
+
+  - Win32/GDI game engine (C++)
+  - Game concept, mechanics, and physics tuning
+  - All rendering code and visual design
+  - Bird character visual design (original icon)
+  - All 5 sound effects (mathematically synthesized)
+  - Shop system and ability system
+  - Anti-cheat and DRM system
+  - Frame timing precision loop (60 FPS QPC)
+  - Registry persistence system
+
+----------------------------------------------------------------
+UNAUTHORIZED USE:
+
+  Unauthorized copying, reverse engineering, decompilation,
+  disassembly, modification, or distribution of this software
+  or its assets is strictly prohibited and may be subject to
+  legal action under applicable copyright law.
+
+----------------------------------------------------------------

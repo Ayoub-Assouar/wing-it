@@ -1,0 +1,3 @@
+# Tell GitHub this is a C++ project
+*.exe linguist-language=C++
+*.md linguist-documentation=true
