@@ -1,4 +1,4 @@
-Flappy Bird
+Wing It
 Copyright (c) 2026 Ayoub Assouar. All rights reserved.
 
 Author:          Ayoub Assouar
