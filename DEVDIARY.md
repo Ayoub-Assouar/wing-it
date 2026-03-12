@@ -1,235 +1,135 @@
-# Flappy Bird — Development Diary
-## Copyright (c) 2026 Ayoub Assouar (EvenKiller0). All rights reserved.
+# Wing It — Dev Diary
+### by Ayoub Assouar | March 2026
 
 ---
 
-## Project Overview
-
-**Author:** Ayoub Assouar
-**Online Identity:** EvenKiller0 / EvenKiller01YT
-**Platform:** Windows (Win32 API, C++)
-**Started:** March 2026
-**Build:** Single self-contained .exe, no installer, no dependencies
+So I wanted to make a game completely from scratch. No Unity, no Godot, no engine at all.
+Just C++ and raw Windows API. Figured it would teach me more than using an engine.
 
 ---
 
-## Day 1 — Architecture Decision
+## Why Win32 / no engine
 
-**Decision: Win32 API only, no engine, no framework.**
-
-I deliberately chose to write this game from scratch using the Windows Win32 API
-and raw GDI rendering. I made this choice because:
-- I wanted full control over every pixel drawn
-- I wanted a single portable .exe with zero external dependencies
-- I wanted to understand the Windows message loop at a low level
-
-I designed the game loop architecture myself: a WinMain entry point,
-a WndProc message handler, and a separate update/draw cycle driven by
-QueryPerformanceCounter for frame-accurate 60FPS timing.
-
-**Core structs I designed:**
-- `Game` — holds all game state: bird position, velocity, pipes, score, best score
-- `Pipe` — holds x position, top height, scored flag
-- `State` enum — IDLE / PLAYING / DEAD state machine
-
-I chose to use a global `Game g` instance for simplicity and direct access
-from the render functions, a deliberate architectural choice.
+I wanted one single .exe file that just runs. No install, no DLLs, no nothing.
+Win32 API lets you do that. Also I wanted to actually understand what's happening
+under the hood instead of clicking buttons in an editor.
 
 ---
 
-## Day 1 — Game Mechanics Design
+## The game loop
 
-**Physics I tuned manually:**
+First version used `GetTickCount` for timing. Turns out that only gives you like 15ms
+resolution so the framerate was inconsistent. Fixed it by switching to
+`QueryPerformanceCounter` which gives microsecond precision, and added
+`timeBeginPeriod(1)` to make Windows timer resolution 1ms.
 
-| Parameter   | Value  | Why I chose it                              |
-|-------------|--------|---------------------------------------------|
-| GRAVITY     | 0.45f  | Feels floaty but responsive                 |
-| JUMP_VEL    | -8.0f  | Quick enough to feel snappy                 |
-| MAX_FALL    | 10.0f  | Prevents infinite acceleration              |
-| PIPE_SPEED  | 2.8f   | Challenging but fair at 60FPS               |
-| PIPE_GAP    | 150px  | Tight enough to require skill               |
-| PIPE_SPACE  | 180px  | Enough time to react between pipes          |
-
-I tested and adjusted these values manually through many playtests.
-The feel of the bird physics is entirely my tuning work.
-
-**Collision system:**
-I wrote an AABB (axis-aligned bounding box) hit detection function myself.
-I deliberately shrunk the collision box by 4px on each side for a forgiving
-"inner hitbox" — a common game design technique I applied consciously.
+The loop sleeps until 1ms before the next frame then spins the last millisecond.
+Also added a skip-ahead guard so if you alt-tab and come back it doesn't try to
+simulate 500 frames at once.
 
 ---
 
-## Day 1 — Rendering System
+## Physics tuning
 
-I wrote all rendering functions from scratch using GDI:
+Spent a while tweaking these until it felt right:
+- Gravity: 0.45 per frame
+- Jump velocity: -8.0
+- Max fall speed: 10.0
+- Pipe speed: 2.8px per frame
+- Pipe gap: 150px
+- Space between pipes: 180px
 
-- `fillRect()` — wrapper I wrote for filled rectangles with auto-cleanup
-- `txt()` — wrapper I wrote for text rendering with centering support
-- `drawBird()` — I designed the bird visually: yellow ellipse body, darker
-  yellow wing ellipse, white eye, black pupil, orange beak triangle, shine dot.
-  I implemented rotation using SetWorldTransform + XFORM matrix manually.
-- `drawPipe()` — I designed the 3-layer pipe: main body, cap, highlight stripe
-- `drawScene()` — I composed the full scene: sky gradient (two rects),
-  hand-placed cloud ellipses, pipes, ground, grass strip, bird, UI text
-
-All color choices (RGB values) are my own creative decisions.
-
-I used double-buffering (hMemDC + BitBlt) to eliminate flicker —
-a technique I chose and implemented myself.
+The hitbox is also shrunk 4px on each side so it's a bit forgiving. Feels better to play.
 
 ---
 
-## Day 1 — Frame Timing (60FPS Fix)
+## Rendering
 
-Initial implementation used GetTickCount() which only gives ~15ms resolution,
-causing inconsistent frame pacing.
+Everything is GDI. Double buffered — draw to an offscreen bitmap then BitBlt to the window.
+No flicker at all.
 
-I redesigned the game loop to use:
-1. `timeBeginPeriod(1)` — sets Windows timer resolution to 1ms
-2. `QueryPerformanceFrequency` + `QueryPerformanceCounter` — microsecond precision
-3. Sleep until 1ms before next frame, then spin — eliminates oversleeping
-4. Skip-ahead guard — if >2 frames behind (e.g. after alt-tab), resets nextFrame
-   instead of simulating a backlog
+The bird rotation was the tricky part. Used `SetWorldTransform` with an XFORM matrix
+to rotate around the bird's center. Angle is calculated from the vertical velocity so
+it tilts up on jump and nosedives when falling.
 
-This is my own implementation of the precision game loop pattern.
+Drew the bird with ellipses and a polygon for the beak. Colors I picked myself.
+Same for the pipes (3 layers: main body, cap, highlight stripe) and the background.
 
 ---
 
-## Day 1 — Sound System
+## Sounds
 
-I designed a dual sound system:
-- `playSound()` — async, fire-and-forget (used for flap/hit, can interrupt)
-- `playSoundThread()` — spawns a dedicated thread per sound for non-blocking
-  synchronous playback (used for score/die sounds that must complete)
+Didn't want to use any samples that I didn't own. So I generated all 5 sounds from
+scratch using Python — pure sine waves, noise, exponential envelopes.
 
-I wrote the thread management manually using CreateThread + CloseHandle.
+- Flap: rising chirp 400→900Hz
+- Score: ascending ding 880→1320Hz  
+- Hit: low thump at 120Hz + noise burst
+- Die: descending wail 600→150Hz
+- Swoosh: 1200→300Hz downward sweep
 
-**Original sounds I created:**
-All 5 sound effects were generated by me using pure mathematical synthesis
-in Python (sine waves, exponential envelopes, noise functions):
-
-- **Wing/Flap** — rising chirp: 400Hz → 900Hz over 0.12s, exponential decay
-- **Score/Point** — ascending ding: 880Hz → 1320Hz, attack+decay envelope
-- **Hit** — low thud: 120Hz sine + noise burst, 0.22s
-- **Die** — descending wail: 600Hz → 150Hz exponential sweep, 0.55s
-- **Swoosh** — downward sweep: 1200Hz → 300Hz, sine envelope, 0.25s
-
-No samples were borrowed. Every sound is a waveform I mathematically designed.
+Converted to WAV, embedded as byte arrays in a header file.
+These are 100% mine.
 
 ---
 
-## Day 1 — Original Icon
+## Icon
 
-I designed and programmed the game icon entirely from scratch using Python/Pillow:
-- Teal circular background (RGB 78, 192, 202)
-- Yellow ellipse bird body (RGB 255, 213, 0)
-- Darker yellow wing ellipse
-- White circular eye with black pupil
-- Orange triangular beak
-- White shine dot on eye
+Drew it programmatically with Python/Pillow. Teal circle, yellow bird, white eye,
+orange beak. Took a few tries to get the ICO format right — Windows Explorer needs
+the pixel data in bottom-up order with a specific BMP DIB header format
+(`biHeight = h*2` to account for the AND mask). PNG-in-ICO doesn't work reliably.
 
-Generated at 6 sizes: 16x16, 32x32, 48x48, 64x64, 128x128, 256x256
-Manually assembled into ICO format using the ICO binary specification.
-
-This icon is 100% original creative work by Ayoub Assouar.
+Embedded into the exe via windres resource file.
 
 ---
 
-## Day 1 — Persistence System
+## Anti-cheat
 
-I designed a registry-based best score system:
-- Key: `HKEY_CURRENT_USER\Software\FlappyBird47`
-- Value: `BestScore` stored as REG_DWORD
+Added a few layers:
+- Debugger detection at startup and during gameplay
+- Speed hack detection by comparing QPC time vs GetTickCount. Cheat Engine shifts
+  GetTickCount but not QPC so the ratio breaks. Three strikes and you're flagged.
+- Memory integrity check on the best score — XOR checksum, if it changes externally
+  the game wipes it and flags the session
+- Registry score is XOR encrypted so you can't just edit it to a high number
 
-I chose registry over file storage deliberately for:
-- No extra files next to the exe
-- Survives exe being moved/renamed
-- Easy to back up with the user's profile
-
----
-
-## Day 2 — Anti-Cheat & DRM System
-
-I designed and implemented a multi-layer protection system:
-
-**1. Debugger Detection**
-- `IsDebuggerPresent()` — Windows API check
-- `CheckRemoteDebuggerPresent()` — catches remote debuggers (x64dbg, OllyDbg)
-- Checked at startup AND periodically during gameplay
-
-**2. Speed-Hack Detection**
-- Compares QueryPerformanceCounter delta vs GetTickCount delta
-- Ratio should be ~1.0; Cheat Engine speed hack shifts GetTickCount but not QPC
-- Requires 3 consecutive violations before flagging (reduces false positives)
-- I designed the sample accumulator logic (g_speedHits counter) myself
-
-**3. Memory Integrity Check**
-- XOR checksum on the best score field: `(DWORD)best ^ INTEG_MAGIC ^ SCORE_XOR`
-- If best score is memory-patched externally (Cheat Engine), checksum fails
-- Response: wipe best score, flag as tampered
-
-**4. Registry Score Encryption**
-- Best score XOR-encoded before writing to registry: key 0xA5C3E7B1
-- Raw value in registry is not the actual score
-- Prevents simple registry editing from granting fake high scores
-
-**5. Silent Punishment System (my own design)**
-When any protection fires, the game does NOT crash or show an error.
-Instead it silently corrupts the cheater's experience:
-- Random drift added to bird physics each frame
-- Pipe gap shrinks to 40px (near-impossible)
-- Score counter never increments
-- Cheater thinks they're just bad at the game
-
-This "silent punishment" design is entirely my own creative and technical decision.
-
-**6. VM Detection**
-Checks for VMware Tools and VirtualBox Guest Additions registry keys.
-
-**7. Copyright String Embedded in Binary**
-A copyright notice is embedded as a volatile char array, visible in
-hex editors and strings analysis tools, establishing authorship in the binary.
+If any of these fire, the game doesn't crash. It just silently breaks:
+random drift on the bird, pipe gap shrinks to 40px, score never goes up.
+Cheater thinks they're just bad.
 
 ---
 
-## Day 2 — Build System
+## Registry / score saving
 
-I chose a single-file compilation approach:
-- All assets (sounds, icon) converted to C header files with embedded byte arrays
-- Single g++ compile command, no Makefile, no build system
-- `-static` flag to bundle all libraries into the exe
-- `-mwindows` to suppress console window
-- Result: one portable .exe file, runs on any Windows machine
+Saves best score to `HKCU\Software\WingIt47`. Chose registry over a file so
+there's nothing extra sitting next to the exe. Score is XOR'd with a key before
+saving so it's not a raw number in regedit.
 
-Compile command I use:
+---
+
+## Build
+
+Single compile command, fully static linked so it runs anywhere:
+
 ```
-g++ flappy2.cpp -o "Flappy Bird.exe" -I. -O2 -std=c++17 -mwindows
-    -lgdi32 -lwinmm -ladvapi32 -static
+g++ flappy2.cpp resource.res -o "Wing It.exe" -I. -O2 -std=c++17 -mwindows -lgdi32 -lwinmm -ladvapi32 -static
 ```
 
----
-
-## Summary of Original Contributions
-
-| Component              | Status       | Notes                                    |
-|------------------------|--------------|------------------------------------------|
-| Game engine (Win32)    | 100% original | Written from scratch, no engine used    |
-| Physics tuning         | 100% original | All constants manually tuned by me      |
-| Collision system       | 100% original | Custom AABB with inner hitbox design    |
-| Rendering pipeline     | 100% original | GDI double-buffer, all draw functions   |
-| Bird visual design     | 100% original | Shapes, colors, rotation all mine       |
-| Pipe visual design     | 100% original | 3-layer design with highlight stripe    |
-| Scene composition      | 100% original | Cloud placement, sky, ground all mine   |
-| Frame timing system    | 100% original | QPC precision loop with skip-ahead guard|
-| Sound system           | 100% original | Dual async/thread architecture          |
-| All 5 sound effects    | 100% original | Mathematically synthesized by me        |
-| Game icon              | 100% original | Programmatically drawn by me            |
-| Anti-cheat system      | 100% original | Multi-layer, silent punishment design   |
-| DRM / copyright embed  | 100% original | XOR encryption, integrity checks        |
-| Registry persistence   | 100% original | My choice of storage method and key     |
+Had to use `windres --use-temp-file` because MinGW has a pipe bug that breaks
+windres otherwise. Also MinGW 15+ requires explicit `std::` prefix for min/max/abs
+so had to add `#include <algorithm>` and fix those calls.
 
 ---
 
-*This diary is a legal record of authorship.*
+## What I learned
+
+- Win32 API is verbose but powerful — good to understand it
+- Precise frame timing matters a lot for game feel
+- ICO format is annoying but documented
+- Anti-cheat is more about making cheating pointless than actually blocking it
+- Generating your own assets means you own everything
+
+---
+
 *Ayoub Assouar — March 2026*
