@@ -8,12 +8,12 @@ Arcade game I made from scratch in C++ with Win32 API. No engine, no framework, 
 
 ## Download
 
-👉 **[Download Wing It.exe](../../releases/latest)**
+👉 **[Download Wing It v5.0](../../releases/latest)**
 
-Just download and run. No installer, no setup, nothing to install.
+Run the installer, launch from the Start Menu or desktop. Clean uninstall included.
 
 - Windows 7 / 8 / 10 / 11
-- Single `.exe` — about 498 KB
+- Installer is about 2 MB
 
 ---
 
@@ -42,7 +42,6 @@ Flap through the pipes. Don't hit anything. Beat your best score.
 - **3 Abilities** — Ghost, Slow Mo, Shield
 - Best score saves between sessions
 - Anti-cheat built in — speed hacks and memory patching don't work
-- One portable exe, no DLLs, nothing left behind on uninstall
 
 ---
 
@@ -69,7 +68,8 @@ No game engine. Everything written manually.
 | Audio | WinMM `PlaySound` with a thread per sound |
 | Frame timing | `QueryPerformanceCounter` + `timeBeginPeriod(1)` |
 | Score saving | Windows Registry, XOR encrypted |
-| Build | MinGW g++, fully static, single compile command |
+| Build | MinGW g++, fully static |
+| Installer | Inno Setup 6 |
 
 Stuff I figured out along the way:
 - Used `SetWorldTransform` for rotating the bird smoothly
